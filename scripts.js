@@ -3,38 +3,66 @@ document.addEventListener('DOMContentLoaded', () => {
     const outputTextarea = document.getElementById('output');
     const copyAllButton = document.getElementById('copy-all');
 
+    /**
+     * Construye una expresión de tabla SQL a partir de una lista de nombres de tabla.
+     * Si hay una tabla, devuelve la ruta completa.
+     * Si hay varias, las une con UNION ALL dentro de una subconsulta.
+     * @param {string} project - El proyecto de GCP.
+     * @param {string} dataset - El dataset de BigQuery.
+     * @param {string} tablesString - Un string de nombres de tabla separados por comas.
+     * @returns {string} La expresión de tabla SQL.
+     */
+    function buildTableExpression(project, dataset, tablesString) {
+        const tableNames = tablesString.split(',').map(t => t.trim()).filter(t => t);
+        if (tableNames.length === 1) {
+            return `\`${project}.${dataset}.${tableNames[0]}\``;
+        }
+
+        const unionAllClauses = tableNames.map(tableName =>
+            `  SELECT * FROM \`${project}.${dataset}.${tableName}\``
+        );
+
+        return `(\n${unionAllClauses.join('\n  UNION ALL\n')}\n)`;
+    }
+
     unifiedForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
         // Extraer valores del formulario
         const project1 = document.getElementById('project1').value.trim();
         const dataset1 = document.getElementById('dataset1').value.trim();
-        const table1 = document.getElementById('table1').value.trim();
+        const table1Input = document.getElementById('table1').value.trim();
         const project2 = document.getElementById('project2').value.trim() || project1;
         const dataset2 = document.getElementById('dataset2').value.trim();
-        const table2 = document.getElementById('table2').value.trim();
+        const table2Input = document.getElementById('table2').value.trim();
         const keyColumns = document.getElementById('key-columns').value.trim();
         const filters = document.getElementById('filters').value.trim();
 
-        if (!project1 || !dataset1 || !table1 || !project2 || !dataset2 || !table2) {
+        if (!project1 || !dataset1 || !table1Input || !project2 || !dataset2 || !table2Input) {
             alert('Para generar la consulta de resumen, debe proporcionar los detalles completos para la Tabla 1 (origen) y la Tabla 2 (destino).');
             return;
         }
 
-        const fullTable1Path = `\`${project1}.${dataset1}.${table1}\``;
-        const fullTable2Path = `\`${project2}.${dataset2}.${table2}\``;
+        // Construir las expresiones de tabla para las validaciones de datos
+        const dataTable1Path = buildTableExpression(project1, dataset1, table1Input);
+        const dataTable2Path = buildTableExpression(project2, dataset2, table2Input);
+
+        // Para la validación de esquema, usar solo la primera tabla de la lista
+        const schemaTable1Name = table1Input.split(',')[0].trim();
+        const schemaTable2Name = table2Input.split(',')[0].trim();
+
         const whereClause = filters ? `WHERE ${filters}` : '';
 
         const ctes = [];
         const finalUnionClauses = [];
 
-        // CTE 1: Row Count Validation
+        // CTE 1: Validación de Conteo de Registros
         ctes.push(`
 count_t1 AS (
-  SELECT COUNT(*) as count FROM ${fullTable1Path} ${whereClause}
+  SELECT COUNT(*) as count FROM ${dataTable1Path} ${whereClause}
 ),
 count_t2 AS (
-  SELECT COUNT(*) as count FROM ${fullTable2Path} ${whereClause}
+  SELECT COUNT(*) as count FROM ${dataTable2Path} ${whereClause}
 ),
 validation_row_count AS (
   SELECT
@@ -45,13 +73,13 @@ validation_row_count AS (
 )`);
         finalUnionClauses.push("SELECT * FROM validation_row_count");
 
-        // CTE 2: Schema/Structure Validation
+        // CTE 2: Validación de Estructura (basada en la primera tabla de cada lista)
         ctes.push(`
 schema_t1 AS (
-  SELECT column_name, data_type, ordinal_position FROM \`${project1}.${dataset1}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table1}'
+  SELECT column_name, data_type, ordinal_position FROM \`${project1}.${dataset1}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${schemaTable1Name}'
 ),
 schema_t2 AS (
-  SELECT column_name, data_type, ordinal_position FROM \`${project2}.${dataset2}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table2}'
+  SELECT column_name, data_type, ordinal_position FROM \`${project2}.${dataset2}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${schemaTable2Name}'
 ),
 schema_discrepancies AS (
   SELECT COUNT(*) AS count
@@ -64,14 +92,14 @@ schema_discrepancies AS (
 ),
 validation_structure AS (
   SELECT
-    '2. Validación de Estructura' AS tipo_de_validacion,
+    '2. Validación de Estructura (usando ${schemaTable1Name} y ${schemaTable2Name})' AS tipo_de_validacion,
     CONCAT('Columnas: ', CAST((SELECT COUNT(*) FROM schema_t1) AS STRING)) AS valor_tabla_1,
     CONCAT('Columnas: ', CAST((SELECT COUNT(*) FROM schema_t2) AS STRING)) AS valor_tabla_2,
     IF((SELECT count FROM schema_discrepancies) = 0, 'OK', CONCAT('Diferencia (', CAST((SELECT count FROM schema_discrepancies) AS STRING), ' columnas)')) AS resultado
 )`);
         finalUnionClauses.push("SELECT * FROM validation_structure");
 
-        // CTE 3: Data Diff Validation (Optional)
+        // CTE 3: Validación de Datos (Opcional)
         if (keyColumns) {
             const keys = keyColumns.split(',').map(c => c.trim());
             if (keys.length > 0 && keys[0] !== '') {
@@ -80,10 +108,10 @@ validation_structure AS (
 
                 ctes.push(`
 source_data AS (
-  SELECT * FROM ${fullTable1Path} ${whereClause}
+  SELECT * FROM ${dataTable1Path} ${whereClause}
 ),
 dest_data AS (
-  SELECT * FROM ${fullTable2Path} ${whereClause}
+  SELECT * FROM ${dataTable2Path} ${whereClause}
 ),
 data_diff AS (
   SELECT
@@ -105,7 +133,6 @@ validation_data_diff AS (
             }
         }
 
-        // Combine all CTEs and the final SELECT statement
         const summaryQuery = `WITH\n${ctes.join(',\n\n')}\n\n-- =============================================\n-- Resultado Final Combinado\n-- =============================================\n${finalUnionClauses.join('\nUNION ALL\n')}\nORDER BY tipo_de_validacion;`;
 
         outputTextarea.value = summaryQuery;
