@@ -1,117 +1,121 @@
 document.addEventListener('DOMContentLoaded', () => {
     const unifiedForm = document.getElementById('unified-form');
-    const project1Input = document.getElementById('project1');
-    const dataset1Input = document.getElementById('dataset1');
-    const table1Input = document.getElementById('table1');
-    const project2Input = document.getElementById('project2');
-    const dataset2Input = document.getElementById('dataset2');
-    const table2Input = document.getElementById('table2');
-    const keyColumnsInput = document.getElementById('key-columns');
-    const filtersInput = document.getElementById('filters');
     const outputTextarea = document.getElementById('output');
     const copyAllButton = document.getElementById('copy-all');
 
     unifiedForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        const project1 = project1Input.value.trim();
-        const dataset1 = dataset1Input.value.trim();
-        const table1 = table1Input.value.trim();
-        const project2 = project2Input.value.trim() || project1;
-        const dataset2 = dataset2Input.value.trim();
-        const table2 = table2Input.value.trim();
-        const keyColumns = keyColumnsInput.value.trim();
-        const filters = filtersInput.value.trim();
+        // Extraer valores del formulario
+        const project1 = document.getElementById('project1').value.trim();
+        const dataset1 = document.getElementById('dataset1').value.trim();
+        const table1 = document.getElementById('table1').value.trim();
+        const project2 = document.getElementById('project2').value.trim() || project1;
+        const dataset2 = document.getElementById('dataset2').value.trim();
+        const table2 = document.getElementById('table2').value.trim();
+        const keyColumns = document.getElementById('key-columns').value.trim();
+        const filters = document.getElementById('filters').value.trim();
 
-        if (!project1 || !dataset1 || !table1) {
-            alert('Por favor, complete al menos el Proyecto 1, Dataset 1 y Tabla 1.');
+        if (!project1 || !dataset1 || !table1 || !project2 || !dataset2 || !table2) {
+            alert('Para generar la consulta de resumen, debe proporcionar los detalles completos para la Tabla 1 (origen) y la Tabla 2 (destino).');
             return;
         }
 
         const fullTable1Path = `\`${project1}.${dataset1}.${table1}\``;
-        const fullTable2Path = (dataset2 && table2) ? `\`${project2}.${dataset2}.${table2}\`` : null;
+        const fullTable2Path = `\`${project2}.${dataset2}.${table2}\``;
+        const whereClause = filters ? `WHERE ${filters}` : '';
 
-        let allQueries = '';
-        const whereClause = filters ? `\nWHERE ${filters}` : '';
+        const ctes = [];
+        const finalUnionClauses = [];
 
-        // 1. Cantidad de registros
-        allQueries += '-- 1. Cantidad de registros de la tabla de origen\n';
-        allQueries += `SELECT COUNT(*) AS total_registros FROM ${fullTable1Path}${whereClause};\n\n`;
+        // CTE 1: Row Count Validation
+        ctes.push(`
+count_t1 AS (
+  SELECT COUNT(*) as count FROM ${fullTable1Path} ${whereClause}
+),
+count_t2 AS (
+  SELECT COUNT(*) as count FROM ${fullTable2Path} ${whereClause}
+),
+validation_row_count AS (
+  SELECT
+    '1. Cantidad de Registros' AS tipo_de_validacion,
+    CAST((SELECT count FROM count_t1) AS STRING) AS valor_tabla_1,
+    CAST((SELECT count FROM count_t2) AS STRING) AS valor_tabla_2,
+    IF((SELECT count FROM count_t1) = (SELECT count FROM count_t2), 'OK', 'Diferencia') AS resultado
+)`);
+        finalUnionClauses.push("SELECT * FROM validation_row_count");
 
-        if (fullTable2Path) {
-            allQueries += '-- 1. Cantidad de registros de la tabla de destino\n';
-            allQueries += `SELECT COUNT(*) AS total_registros FROM ${fullTable2Path}${whereClause};\n\n`;
-        }
-
-        // Conteo de campos y tipos de datos para la tabla de origen
-        allQueries += '-- 2. Descripción de la tabla de origen\n';
-        allQueries += `SELECT column_name, data_type, ordinal_position FROM \`${project1}.${dataset1}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table1}' ORDER BY ordinal_position;\n\n`;
-
-        if (fullTable2Path) {
-            // Conteo de campos y tipos de datos para la tabla de destino
-            allQueries += '-- 2. Descripción de la tabla de destino\n';
-            allQueries += `SELECT column_name, data_type, ordinal_position FROM \`${project2}.${dataset2}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table2}' ORDER BY ordinal_position;\n\n`;
-
-            // Nueva Validación de Estructura
-            allQueries += '-- 3. Validación de Estructura (Columnas, Tipos de Datos y Posición)\n';
-            allQueries += `WITH schema_t1 AS (
-    SELECT column_name, data_type, ordinal_position FROM \`${project1}.${dataset1}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table1}'
+        // CTE 2: Schema/Structure Validation
+        ctes.push(`
+schema_t1 AS (
+  SELECT column_name, data_type, ordinal_position FROM \`${project1}.${dataset1}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table1}'
 ),
 schema_t2 AS (
-    SELECT column_name, data_type, ordinal_position FROM \`${project2}.${dataset2}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table2}'
-)
-SELECT
-    COALESCE(t1.column_name, t2.column_name) AS column_name,
-    t1.ordinal_position AS posicion_t1,
-    t2.ordinal_position AS posicion_t2,
-    t1.data_type AS tipo_dato_t1,
-    t2.data_type AS tipo_dato_t2,
-    CASE
-        WHEN t1.column_name IS NULL THEN 'Columna solo en tabla 2'
-        WHEN t2.column_name IS NULL THEN 'Columna solo en tabla 1'
-        WHEN t1.data_type != t2.data_type THEN 'Diferente tipo de dato'
-        WHEN t1.ordinal_position != t2.ordinal_position THEN 'Diferente posición'
-        ELSE 'OK'
-    END AS estado
-FROM schema_t1 t1
-FULL OUTER JOIN schema_t2 t2 ON t1.column_name = t2.column_name
-WHERE
-    t1.column_name IS NULL
-    OR t2.column_name IS NULL
-    OR t1.data_type != t2.data_type
-    OR t1.ordinal_position != t2.ordinal_position
-ORDER BY
-    COALESCE(t1.ordinal_position, t2.ordinal_position);\n\n`;
-
-            // Validación campo a campo
-            if (keyColumns) {
-                const keys = keyColumns.split(',').map(c => c.trim());
-                if(keys.length > 0 && keys[0] !== ''){
-                    const joinConditions = keys.map(c => `s.${c} = d.${c}`).join(' AND ');
-                    const firstKey = keys[0];
-                    allQueries += '-- 4. Validación de datos campo a campo\n';
-                    allQueries += `WITH source AS (
-    SELECT * FROM ${fullTable1Path}${whereClause}
+  SELECT column_name, data_type, ordinal_position FROM \`${project2}.${dataset2}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table2}'
 ),
-destination AS (
-    SELECT * FROM ${fullTable2Path}${whereClause}
-)
-SELECT *
-FROM source s
-FULL OUTER JOIN destination d ON ${joinConditions}
-WHERE TO_JSON_STRING(s) != TO_JSON_STRING(d) OR s.${firstKey} IS NULL OR d.${firstKey} IS NULL;\n\n`;
-                }
+schema_discrepancies AS (
+  SELECT COUNT(*) AS count
+  FROM schema_t1 t1
+  FULL OUTER JOIN schema_t2 t2 ON t1.column_name = t2.column_name
+  WHERE t1.column_name IS NULL
+     OR t2.column_name IS NULL
+     OR t1.data_type != t2.data_type
+     OR t1.ordinal_position != t2.ordinal_position
+),
+validation_structure AS (
+  SELECT
+    '2. Validación de Estructura' AS tipo_de_validacion,
+    CONCAT('Columnas: ', CAST((SELECT COUNT(*) FROM schema_t1) AS STRING)) AS valor_tabla_1,
+    CONCAT('Columnas: ', CAST((SELECT COUNT(*) FROM schema_t2) AS STRING)) AS valor_tabla_2,
+    IF((SELECT count FROM schema_discrepancies) = 0, 'OK', CONCAT('Diferencia (', CAST((SELECT count FROM schema_discrepancies) AS STRING), ' columnas)')) AS resultado
+)`);
+        finalUnionClauses.push("SELECT * FROM validation_structure");
+
+        // CTE 3: Data Diff Validation (Optional)
+        if (keyColumns) {
+            const keys = keyColumns.split(',').map(c => c.trim());
+            if (keys.length > 0 && keys[0] !== '') {
+                const joinConditions = keys.map(c => `s.\`${c}\` = d.\`${c}\``).join(' AND ');
+                const nonNullKeyCheck = keys.map(c => `s.\`${c}\` IS NOT NULL AND d.\`${c}\` IS NOT NULL`).join(' AND ');
+
+                ctes.push(`
+source_data AS (
+  SELECT * FROM ${fullTable1Path} ${whereClause}
+),
+dest_data AS (
+  SELECT * FROM ${fullTable2Path} ${whereClause}
+),
+data_diff AS (
+  SELECT
+    COUNTIF(d.\`${keys[0]}\` IS NULL) AS only_in_source,
+    COUNTIF(s.\`${keys[0]}\` IS NULL) AS only_in_dest,
+    COUNTIF(${nonNullKeyCheck} AND TO_JSON_STRING(s) != TO_JSON_STRING(d)) as mismatched_data
+  FROM source_data s
+  FULL OUTER JOIN dest_data d ON ${joinConditions}
+),
+validation_data_diff AS (
+  SELECT
+    '3. Validación de Datos (Campo a Campo)' AS tipo_de_validacion,
+    CONCAT('Solo en Origen: ', CAST(only_in_source AS STRING), '\\nDatos Diferentes: ', CAST(mismatched_data AS STRING)) AS valor_tabla_1,
+    CONCAT('Solo en Destino: ', CAST(only_in_dest AS STRING), '\\nDatos Diferentes: ', CAST(mismatched_data AS STRING)) AS valor_tabla_2,
+    IF(only_in_source = 0 AND only_in_dest = 0 AND mismatched_data = 0, 'OK', 'Diferencia') AS resultado
+  FROM data_diff
+)`);
+                finalUnionClauses.push("SELECT * FROM validation_data_diff");
             }
         }
 
-        outputTextarea.value = allQueries;
+        // Combine all CTEs and the final SELECT statement
+        const summaryQuery = `WITH\n${ctes.join(',\n\n')}\n\n-- =============================================\n-- Resultado Final Combinado\n-- =============================================\n${finalUnionClauses.join('\nUNION ALL\n')}\nORDER BY tipo_de_validacion;`;
+
+        outputTextarea.value = summaryQuery;
     });
 
     copyAllButton.addEventListener('click', () => {
         if (outputTextarea.value) {
             outputTextarea.select();
             document.execCommand('copy');
-            alert('Consultas SQL copiadas al portapapeles');
+            alert('Consulta de Resumen copiada al portapapeles');
         }
     });
 });
