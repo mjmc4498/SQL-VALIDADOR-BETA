@@ -16,6 +16,11 @@
                 <h2>Parámetros de Entrada</h2>
 
                 <div class="form-section">
+                    <label for="project1">Proyecto 1 (origen):</label>
+                    <input type="text" id="project1" placeholder="Ej: mi-proyecto-origen" required>
+                </div>
+
+                <div class="form-section">
                     <label for="dataset1">Dataset 1 (origen):</label>
                     <input type="text" id="dataset1" placeholder="Ej: mi_dataset_origen" required>
                 </div>
@@ -23,6 +28,13 @@
                 <div class="form-section">
                     <label for="table1">Tabla 1 (origen):</label>
                     <input type="text" id="table1" placeholder="Ej: tabla_origen" required>
+                </div>
+
+                <hr>
+
+                <div class="form-section">
+                    <label for="project2">Proyecto 2 (destino, opcional):</label>
+                    <input type="text" id="project2" placeholder="Ej: mi-proyecto-destino">
                 </div>
 
                 <div class="form-section">
@@ -35,8 +47,10 @@
                     <input type="text" id="table2" placeholder="Ej: tabla_destino">
                 </div>
 
+                <hr>
+
                 <div class="form-section">
-                    <label for="key-columns">Columnas Llave (para validación campo a campo, separadas por comas):</label>
+                    <label for="key-columns">Columnas Llave (para validación, separadas por comas):</label>
                     <input type="text" id="key-columns" placeholder="Ej: id_cliente, fecha">
                 </div>
 

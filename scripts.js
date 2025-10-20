@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     const unifiedForm = document.getElementById('unified-form');
+    const project1Input = document.getElementById('project1');
     const dataset1Input = document.getElementById('dataset1');
     const table1Input = document.getElementById('table1');
+    const project2Input = document.getElementById('project2');
     const dataset2Input = document.getElementById('dataset2');
     const table2Input = document.getElementById('table2');
     const keyColumnsInput = document.getElementById('key-columns');
@@ -12,46 +14,51 @@ document.addEventListener('DOMContentLoaded', () => {
     unifiedForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
+        const project1 = project1Input.value.trim();
         const dataset1 = dataset1Input.value.trim();
         const table1 = table1Input.value.trim();
-        const dataset2 = dataset2Input.value.trim() || dataset1;
+        const project2 = project2Input.value.trim() || project1;
+        const dataset2 = dataset2Input.value.trim();
         const table2 = table2Input.value.trim();
         const keyColumns = keyColumnsInput.value.trim();
         const filters = filtersInput.value.trim();
 
-        if (!dataset1 || !table1) {
-            alert('Por favor, complete al menos el Dataset 1 y la Tabla 1.');
+        if (!project1 || !dataset1 || !table1) {
+            alert('Por favor, complete al menos el Proyecto 1, Dataset 1 y Tabla 1.');
             return;
         }
+
+        const fullTable1Path = `\`${project1}.${dataset1}.${table1}\``;
+        const fullTable2Path = (dataset2 && table2) ? `\`${project2}.${dataset2}.${table2}\`` : null;
 
         let allQueries = '';
         const whereClause = filters ? `\nWHERE ${filters}` : '';
 
         // 1. Cantidad de registros
         allQueries += '-- 1. Cantidad de registros de la tabla de origen\n';
-        allQueries += `SELECT COUNT(*) AS total_registros FROM \`${dataset1}.${table1}\`${whereClause};\n\n`;
+        allQueries += `SELECT COUNT(*) AS total_registros FROM ${fullTable1Path}${whereClause};\n\n`;
 
-        if (table2) {
+        if (fullTable2Path) {
             allQueries += '-- 1. Cantidad de registros de la tabla de destino\n';
-            allQueries += `SELECT COUNT(*) AS total_registros FROM \`${dataset2}.${table2}\`${whereClause};\n\n`;
+            allQueries += `SELECT COUNT(*) AS total_registros FROM ${fullTable2Path}${whereClause};\n\n`;
         }
 
         // Conteo de campos y tipos de datos para la tabla de origen
-        allQueries += '-- 2. Conteo de campos y tipos de datos para la tabla de origen\n';
-        allQueries += `SELECT column_name, data_type, ordinal_position FROM \`${dataset1}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table1}' ORDER BY ordinal_position;\n\n`;
+        allQueries += '-- 2. Descripción de la tabla de origen\n';
+        allQueries += `SELECT column_name, data_type, ordinal_position FROM \`${project1}.${dataset1}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table1}' ORDER BY ordinal_position;\n\n`;
 
-        if (table2) {
+        if (fullTable2Path) {
             // Conteo de campos y tipos de datos para la tabla de destino
-            allQueries += '-- 2. Conteo de campos y tipos de datos para la tabla de destino\n';
-            allQueries += `SELECT column_name, data_type, ordinal_position FROM \`${dataset2}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table2}' ORDER BY ordinal_position;\n\n`;
+            allQueries += '-- 2. Descripción de la tabla de destino\n';
+            allQueries += `SELECT column_name, data_type, ordinal_position FROM \`${project2}.${dataset2}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table2}' ORDER BY ordinal_position;\n\n`;
 
             // Nueva Validación de Estructura
             allQueries += '-- 3. Validación de Estructura (Columnas, Tipos de Datos y Posición)\n';
             allQueries += `WITH schema_t1 AS (
-    SELECT column_name, data_type, ordinal_position FROM \`${dataset1}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table1}'
+    SELECT column_name, data_type, ordinal_position FROM \`${project1}.${dataset1}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table1}'
 ),
 schema_t2 AS (
-    SELECT column_name, data_type, ordinal_position FROM \`${dataset2}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table2}'
+    SELECT column_name, data_type, ordinal_position FROM \`${project2}.${dataset2}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table2}'
 )
 SELECT
     COALESCE(t1.column_name, t2.column_name) AS column_name,
@@ -79,15 +86,15 @@ ORDER BY
             // Validación campo a campo
             if (keyColumns) {
                 const keys = keyColumns.split(',').map(c => c.trim());
-                if(keys.length > 0){
+                if(keys.length > 0 && keys[0] !== ''){
                     const joinConditions = keys.map(c => `s.${c} = d.${c}`).join(' AND ');
                     const firstKey = keys[0];
-                    allQueries += '-- 4. Validación campo a campo (datos)\n';
+                    allQueries += '-- 4. Validación de datos campo a campo\n';
                     allQueries += `WITH source AS (
-    SELECT * FROM \`${dataset1}.${table1}\`${whereClause}
+    SELECT * FROM ${fullTable1Path}${whereClause}
 ),
 destination AS (
-    SELECT * FROM \`${dataset2}.${table2}\`${whereClause}
+    SELECT * FROM ${fullTable2Path}${whereClause}
 )
 SELECT *
 FROM source s
