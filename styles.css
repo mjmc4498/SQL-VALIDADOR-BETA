@@ -26,7 +26,9 @@ h1 {
 
 #app {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-template-columns: 1fr;
+    max-width: 800px;
+    margin: 0 auto;
     gap: 2rem;
 }
 
@@ -36,12 +38,6 @@ h1 {
     border-radius: var(--border-radius);
     padding: 2rem;
     box-shadow: var(--box-shadow);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.module:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
 }
 
 h2 {
@@ -54,7 +50,13 @@ h2 {
 form {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
+}
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 label {
@@ -66,6 +68,8 @@ input[type="text"] {
     border: 1px solid var(--light-gray);
     border-radius: var(--border-radius);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 input[type="text"]:focus {
@@ -83,6 +87,7 @@ button {
     transition: background-color 0.3s ease, transform 0.2s ease;
     text-transform: uppercase;
     font-weight: bold;
+    align-self: flex-start;
 }
 
 button[type="submit"] {
@@ -97,22 +102,22 @@ button[type="submit"]:hover {
 
 textarea {
     width: 100%;
-    height: 120px;
-    margin-top: 1rem;
+    height: 400px;
     padding: 0.8rem;
     border: 1px solid var(--light-gray);
     border-radius: var(--border-radius);
     resize: vertical;
     font-family: 'Courier New', Courier, monospace;
+    box-sizing: border-box;
 }
 
-[id$="-copy"] {
+#copy-all {
     background-color: var(--secondary-color);
     color: var(--white);
-    margin-top: 0.5rem;
+    margin-top: 1rem;
 }
 
-[id$="-copy"]:hover {
+#copy-all:hover {
     background-color: #2e8b45;
     transform: scale(1.02);
 }

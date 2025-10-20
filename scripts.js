@@ -1,40 +1,36 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const recordCountForm = document.getElementById('record-count-form');
-    const rcDataset = document.getElementById('rc-dataset');
-    const rcTable = document.getElementById('rc-table');
-    const rcOutput = document.getElementById('rc-output');
-    const rcCopy = document.getElementById('rc-copy');
+    const unifiedForm = document.getElementById('unified-form');
+    const datasetInput = document.getElementById('dataset');
+    const table1Input = document.getElementById('table1');
+    const table2Input = document.getElementById('table2');
+    const keyColumnsInput = document.getElementById('key-columns');
+    const outputTextarea = document.getElementById('output');
+    const copyAllButton = document.getElementById('copy-all');
 
-    recordCountForm.addEventListener('submit', (e) => {
+    unifiedForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const dataset = rcDataset.value.trim();
-        const table = rcTable.value.trim();
-        if (dataset && table) {
-            const sql = `SELECT COUNT(*) FROM \`${dataset}.${table}\`;`;
-            rcOutput.value = sql;
+
+        const dataset = datasetInput.value.trim();
+        const table1 = table1Input.value.trim();
+        const table2 = table2Input.value.trim();
+        const keyColumns = keyColumnsInput.value.trim();
+
+        if (!dataset || !table1 || !table2) {
+            alert('Por favor, complete todos los campos obligatorios.');
+            return;
         }
-    });
 
-    rcCopy.addEventListener('click', () => {
-        rcOutput.select();
-        document.execCommand('copy');
-        alert('SQL copiado al portapapeles');
-    });
+        let allQueries = '';
 
-    const dataTypeComparisonForm = document.getElementById('data-type-comparison-form');
-    const dtcDataset = document.getElementById('dtc-dataset');
-    const dtcTable1 = document.getElementById('dtc-table1');
-    const dtcTable2 = document.getElementById('dtc-table2');
-    const dtcOutput = document.getElementById('dtc-output');
-    const dtcCopy = document.getElementById('dtc-copy');
+        // 1. Cantidad de registros de tablas dentro de un data set
+        allQueries += '-- 1. Cantidad de registros de la tabla de origen\n';
+        allQueries += `SELECT COUNT(*) AS total_registros FROM \`${dataset}.${table1}\`;\n\n`;
+        allQueries += '-- 1. Cantidad de registros de la tabla de destino\n';
+        allQueries += `SELECT COUNT(*) AS total_registros FROM \`${dataset}.${table2}\`;\n\n`;
 
-    dataTypeComparisonForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const dataset = dtcDataset.value.trim();
-        const table1 = dtcTable1.value.trim();
-        const table2 = dtcTable2.value.trim();
-        if (dataset && table1 && table2) {
-            const sql = `SELECT
+        // 2. Tipos de datos entre tabla 1 y tabla 2
+        allQueries += '-- 2. Tipos de datos entre tabla 1 y tabla 2\n';
+        allQueries += `SELECT
     COALESCE(a.column_name, b.column_name) as column_name,
     a.data_type AS tipo_tabla_1,
     b.data_type AS tipo_tabla_2
@@ -43,104 +39,40 @@ FROM
 FULL OUTER JOIN
     (SELECT column_name, data_type FROM \`${dataset}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table2}') b ON a.column_name = b.column_name
 WHERE
-    a.data_type IS DISTINCT FROM b.data_type;`;
-            dtcOutput.value = sql;
+    a.data_type IS DISTINCT FROM b.data_type;\n\n`;
+
+        // 3. Conteo de campos internos y tipo de datos
+        allQueries += '-- 3. Conteo de campos internos y tipo de datos para la tabla de origen\n';
+        allQueries += `SELECT column_name, data_type FROM \`${dataset}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table1}';\n\n`;
+        allQueries += '-- 3. Conteo de campos internos y tipo de datos para la tabla de destino\n';
+        allQueries += `SELECT column_name, data_type FROM \`${dataset}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table2}';\n\n`;
+
+        // 4. Validación campo a campo, tabla origen y tabla destino
+        if (keyColumns) {
+            const keys = keyColumns.split(',').map(c => c.trim());
+            const joinConditions = keys.map(c => `s.${c} = d.${c}`).join(' AND ');
+            const firstKey = keys[0];
+            allQueries += '-- 4. Validación campo a campo, tabla origen y tabla destino\n';
+            allQueries += `SELECT *
+FROM \`${dataset}.${table1}\` s
+FULL OUTER JOIN \`${dataset}.${table2}\` d ON ${joinConditions}
+WHERE TO_JSON_STRING(s) != TO_JSON_STRING(d) OR s.${firstKey} IS NULL OR d.${firstKey} IS NULL;\n\n`;
         }
+
+        // 5. Orden de columnas y orden de campos
+        allQueries += '-- 5. Orden de columnas y orden de campos para la tabla de origen\n';
+        allQueries += `SELECT column_name, ordinal_position FROM \`${dataset}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table1}' ORDER BY ordinal_position;\n\n`;
+        allQueries += '-- 5. Orden de columnas y orden de campos para la tabla de destino\n';
+        allQueries += `SELECT column_name, ordinal_position FROM \`${dataset}.INFORMATION_SCHEMA.COLUMNS\` WHERE table_name = '${table2}' ORDER BY ordinal_position;\n\n`;
+
+        outputTextarea.value = allQueries;
     });
 
-    dtcCopy.addEventListener('click', () => {
-        dtcOutput.select();
-        document.execCommand('copy');
-        alert('SQL copiado al portapapeles');
-    });
-
-    const fieldCountForm = document.getElementById('field-count-form');
-    const fcDataset = document.getElementById('fc-dataset');
-    const fcTable = document.getElementById('fc-table');
-    const fcOutput = document.getElementById('fc-output');
-    const fcCopy = document.getElementById('fc-copy');
-
-    fieldCountForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const dataset = fcDataset.value.trim();
-        const table = fcTable.value.trim();
-        if (dataset && table) {
-            const sql = `SELECT
-    column_name,
-    data_type
-FROM
-    \`${dataset}.INFORMATION_SCHEMA.COLUMNS\`
-WHERE
-    table_name = '${table}';`;
-            fcOutput.value = sql;
+    copyAllButton.addEventListener('click', () => {
+        if (outputTextarea.value) {
+            outputTextarea.select();
+            document.execCommand('copy');
+            alert('Consultas SQL copiadas al portapapeles');
         }
-    });
-
-    fcCopy.addEventListener('click', () => {
-        fcOutput.select();
-        document.execCommand('copy');
-        alert('SQL copiado al portapapeles');
-    });
-
-    const fieldValidationForm = document.getElementById('field-validation-form');
-    const fvDataset = document.getElementById('fv-dataset');
-    const fvTableSource = document.getElementById('fv-table-source');
-    const fvTableDest = document.getElementById('fv-table-dest');
-    const fvKeyColumns = document.getElementById('fv-key-columns');
-    const fvOutput = document.getElementById('fv-output');
-    const fvCopy = document.getElementById('fv-copy');
-
-    fieldValidationForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const dataset = fvDataset.value.trim();
-        const sourceTable = fvTableSource.value.trim();
-        const destTable = fvTableDest.value.trim();
-        const keyColumns = fvKeyColumns.value.trim().split(',').map(c => c.trim());
-
-        if (dataset && sourceTable && destTable && keyColumns.length > 0) {
-            const joinConditions = keyColumns.map(c => `s.${c} = d.${c}`).join(' AND ');
-            const firstKey = keyColumns[0];
-            const sql = `SELECT *
-FROM \`${dataset}.${sourceTable}\` s
-FULL OUTER JOIN \`${dataset}.${destTable}\` d ON ${joinConditions}
-WHERE TO_JSON_STRING(s) != TO_JSON_STRING(d) OR s.${firstKey} IS NULL OR d.${firstKey} IS NULL;`;
-            fvOutput.value = sql;
-        }
-    });
-
-    fvCopy.addEventListener('click', () => {
-        fvOutput.select();
-        document.execCommand('copy');
-        alert('SQL copiado al portapapeles');
-    });
-
-    const columnOrderForm = document.getElementById('column-order-form');
-    const coDataset = document.getElementById('co-dataset');
-    const coTable = document.getElementById('co-table');
-    const coOutput = document.getElementById('co-output');
-    const coCopy = document.getElementById('co-copy');
-
-    columnOrderForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const dataset = coDataset.value.trim();
-        const table = coTable.value.trim();
-        if (dataset && table) {
-            const sql = `SELECT
-    column_name,
-    ordinal_position
-FROM
-    \`${dataset}.INFORMATION_SCHEMA.COLUMNS\`
-WHERE
-    table_name = '${table}'
-ORDER BY
-    ordinal_position;`;
-            coOutput.value = sql;
-        }
-    });
-
-    coCopy.addEventListener('click', () => {
-        coOutput.select();
-        document.execCommand('copy');
-        alert('SQL copiado al portapapeles');
     });
 });

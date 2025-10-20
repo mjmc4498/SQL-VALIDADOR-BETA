@@ -12,70 +12,37 @@
 
     <div id="app">
         <div class="module">
-            <h2>Cantidad de registros de tablas dentro de un data set</h2>
-            <form id="record-count-form">
-                <label for="rc-dataset">Dataset:</label>
-                <input type="text" id="rc-dataset" required>
-                <label for="rc-table">Tabla:</label>
-                <input type="text" id="rc-table" required>
-                <button type="submit">Generar SQL</button>
+            <form id="unified-form">
+                <h2>Parámetros de Entrada</h2>
+
+                <div class="form-section">
+                    <label for="dataset">Dataset:</label>
+                    <input type="text" id="dataset" placeholder="Ej: mi_dataset" required>
+                </div>
+
+                <div class="form-section">
+                    <label for="table1">Tabla 1 (origen):</label>
+                    <input type="text" id="table1" placeholder="Ej: tabla_origen" required>
+                </div>
+
+                <div class="form-section">
+                    <label for="table2">Tabla 2 (destino):</label>
+                    <input type="text" id="table2" placeholder="Ej: tabla_destino" required>
+                </div>
+
+                <div class="form-section">
+                    <label for="key-columns">Columnas Llave (para validación campo a campo, separadas por comas):</label>
+                    <input type="text" id="key-columns" placeholder="Ej: id_cliente, fecha">
+                </div>
+
+                <button type="submit">Generar Todas las Consultas</button>
             </form>
-            <textarea id="rc-output" readonly></textarea>
-            <button id="rc-copy">Copiar SQL</button>
         </div>
+
         <div class="module">
-            <h2>Tipos de datos entre tabla 1 y tabla 2</h2>
-            <form id="data-type-comparison-form">
-                <label for="dtc-dataset">Dataset:</label>
-                <input type="text" id="dtc-dataset" required>
-                <label for="dtc-table1">Tabla 1:</label>
-                <input type="text" id="dtc-table1" required>
-                <label for="dtc-table2">Tabla 2:</label>
-                <input type="text" id="dtc-table2" required>
-                <button type="submit">Generar SQL</button>
-            </form>
-            <textarea id="dtc-output" readonly></textarea>
-            <button id="dtc-copy">Copiar SQL</button>
-        </div>
-        <div class="module">
-            <h2>Conteo de campos internos y tipo de datos</h2>
-            <form id="field-count-form">
-                <label for="fc-dataset">Dataset:</label>
-                <input type="text" id="fc-dataset" required>
-                <label for="fc-table">Tabla:</label>
-                <input type="text" id="fc-table" required>
-                <button type="submit">Generar SQL</button>
-            </form>
-            <textarea id="fc-output" readonly></textarea>
-            <button id="fc-copy">Copiar SQL</button>
-        </div>
-        <div class="module">
-            <h2>Validación campo a campo, tabla origen y tabla destino</h2>
-            <form id="field-validation-form">
-                <label for="fv-dataset">Dataset:</label>
-                <input type="text" id="fv-dataset" required>
-                <label for="fv-table-source">Tabla Origen:</label>
-                <input type="text" id="fv-table-source" required>
-                <label for="fv-table-dest">Tabla Destino:</label>
-                <input type="text" id="fv-table-dest" required>
-                <label for="fv-key-columns">Columnas Llave (separadas por coma):</label>
-                <input type="text" id="fv-key-columns" required>
-                <button type="submit">Generar SQL</button>
-            </form>
-            <textarea id="fv-output" readonly></textarea>
-            <button id="fv-copy">Copiar SQL</button>
-        </div>
-        <div class="module">
-            <h2>Orden de columnas y orden de campos</h2>
-            <form id="column-order-form">
-                <label for="co-dataset">Dataset:</label>
-                <input type="text" id="co-dataset" required>
-                <label for="co-table">Tabla:</label>
-                <input type="text" id="co-table" required>
-                <button type="submit">Generar SQL</button>
-            </form>
-            <textarea id="co-output" readonly></textarea>
-            <button id="co-copy">Copiar SQL</button>
+            <h2>Consultas SQL Generadas</h2>
+            <textarea id="output" readonly></textarea>
+            <button id="copy-all">Copiar Todo</button>
         </div>
     </div>
 
