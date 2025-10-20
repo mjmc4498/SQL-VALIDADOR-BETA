@@ -1,56 +1,81 @@
+/* Import Google Fonts: Montserrat */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+/* Define Interseguro brand colors and general variables */
 :root {
-    --primary-color: #4285F4;
-    --secondary-color: #34A853;
-    --background-color: #f8f9fa;
-    --text-color: #3c4043;
-    --light-gray: #e0e0e0;
-    --white: #ffffff;
+    --interseguro-dark-blue: #0033A0;
+    --interseguro-cyan: #00AEEF;
+    --interseguro-background: #f4f7f9;
+    --interseguro-text: #333333;
+    --interseguro-gray: #e0e0e0;
+    --interseguro-white: #ffffff;
     --border-radius: 8px;
-    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+/* General body and typography styles */
 body {
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     margin: 0;
-    padding: 2rem;
-    background-color: var(--background-color);
-    color: var(--text-color);
+    background-color: var(--interseguro-background);
+    color: var(--interseguro-text);
     line-height: 1.6;
 }
 
-h1 {
-    text-align: center;
-    color: var(--primary-color);
-    margin-bottom: 2rem;
+/* Header styles */
+header {
+    background-color: var(--interseguro-dark-blue);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    box-shadow: var(--box-shadow);
 }
 
+.logo {
+    height: 40px;
+    margin-right: 1.5rem;
+}
+
+header h1 {
+    color: var(--interseguro-white);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Main container layout */
 #app {
     display: grid;
     grid-template-columns: 1fr;
-    max-width: 800px;
-    margin: 0 auto;
     gap: 2rem;
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
 }
 
+/* Card/module styles */
 .module {
-    background: var(--white);
-    border: 1px solid var(--light-gray);
+    background: var(--interseguro-white);
     border-radius: var(--border-radius);
     padding: 2rem;
     box-shadow: var(--box-shadow);
 }
 
 h2 {
-    color: var(--secondary-color);
-    border-bottom: 2px solid var(--secondary-color);
+    color: var(--interseguro-dark-blue);
+    border-bottom: 2px solid var(--interseguro-cyan);
     padding-bottom: 0.5rem;
     margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
 }
 
+/* Form styles */
 form {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.2rem;
 }
 
 .form-section {
@@ -60,64 +85,100 @@ form {
 }
 
 label {
-    font-weight: bold;
+    font-weight: 600;
+    color: var(--interseguro-text);
 }
 
 input[type="text"] {
-    padding: 0.8rem;
-    border: 1px solid var(--light-gray);
+    padding: 0.75rem;
+    border: 1px solid var(--interseguro-gray);
     border-radius: var(--border-radius);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
     width: 100%;
     box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
 }
 
 input[type="text"]:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2);
+    border-color: var(--interseguro-cyan);
+    box-shadow: 0 0 0 3px rgba(0, 174, 239, 0.2);
 }
 
+/* Button styles */
 button {
-    padding: 0.8rem 1.5rem;
+    padding: 0.75rem 1.5rem;
     border: none;
     border-radius: var(--border-radius);
     cursor: pointer;
     font-size: 1rem;
+    font-weight: 600;
     transition: background-color 0.3s ease, transform 0.2s ease;
-    text-transform: uppercase;
-    font-weight: bold;
     align-self: flex-start;
 }
 
 button[type="submit"] {
-    background-color: var(--primary-color);
-    color: var(--white);
+    background-color: var(--interseguro-dark-blue);
+    color: var(--interseguro-white);
 }
 
 button[type="submit"]:hover {
-    background-color: #3a75d1;
-    transform: scale(1.02);
-}
-
-textarea {
-    width: 100%;
-    height: 400px;
-    padding: 0.8rem;
-    border: 1px solid var(--light-gray);
-    border-radius: var(--border-radius);
-    resize: vertical;
-    font-family: 'Courier New', Courier, monospace;
-    box-sizing: border-box;
+    background-color: #002266; /* Darker blue on hover */
+    transform: translateY(-2px);
 }
 
 #copy-all {
-    background-color: var(--secondary-color);
-    color: var(--white);
+    background-color: var(--interseguro-cyan);
+    color: var(--interseguro-white);
     margin-top: 1rem;
 }
 
 #copy-all:hover {
-    background-color: #2e8b45;
-    transform: scale(1.02);
+    background-color: #0095c7; /* Darker cyan on hover */
+    transform: translateY(-2px);
+}
+
+/* Textarea styles */
+textarea {
+    width: 100%;
+    height: 400px;
+    padding: 1rem;
+    border: 1px solid var(--interseguro-gray);
+    border-radius: var(--border-radius);
+    resize: vertical;
+    font-family: 'Courier New', Courier, monospace;
+    box-sizing: border-box;
+    background-color: #fdfdfd;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--interseguro-gray);
+    margin: 1rem 0;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    body {
+        padding: 1rem;
+    }
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1rem;
+    }
+
+    header h1 {
+        margin-top: 1rem;
+        font-size: 1.2rem;
+    }
+
+    #app {
+        padding: 1rem;
+    }
+
+    .module {
+        padding: 1.5rem;
+    }
 }
