@@ -16,8 +16,8 @@
                 <h2>Parámetros de Entrada</h2>
 
                 <div class="form-section">
-                    <label for="dataset">Dataset:</label>
-                    <input type="text" id="dataset" placeholder="Ej: mi_dataset" required>
+                    <label for="dataset1">Dataset 1 (origen):</label>
+                    <input type="text" id="dataset1" placeholder="Ej: mi_dataset_origen" required>
                 </div>
 
                 <div class="form-section">
@@ -26,13 +26,23 @@
                 </div>
 
                 <div class="form-section">
-                    <label for="table2">Tabla 2 (destino):</label>
-                    <input type="text" id="table2" placeholder="Ej: tabla_destino" required>
+                    <label for="dataset2">Dataset 2 (destino, opcional):</label>
+                    <input type="text" id="dataset2" placeholder="Ej: mi_dataset_destino">
+                </div>
+
+                <div class="form-section">
+                    <label for="table2">Tabla 2 (destino, opcional):</label>
+                    <input type="text" id="table2" placeholder="Ej: tabla_destino">
                 </div>
 
                 <div class="form-section">
                     <label for="key-columns">Columnas Llave (para validación campo a campo, separadas por comas):</label>
                     <input type="text" id="key-columns" placeholder="Ej: id_cliente, fecha">
+                </div>
+
+                <div class="form-section">
+                    <label for="filters">Filtros (cláusula WHERE, opcional):</label>
+                    <input type="text" id="filters" placeholder="Ej: fecha > '2023-01-01' AND pais = 'MX'">
                 </div>
 
                 <button type="submit">Generar Todas las Consultas</button>
