@@ -1,184 +1,43 @@
 /* Import Google Fonts: Montserrat */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
 
-/* Define Interseguro brand colors and general variables */
 :root {
-    --interseguro-dark-blue: #0033A0;
-    --interseguro-cyan: #00AEEF;
-    --interseguro-background: #f4f7f9;
-    --interseguro-text: #333333;
-    --interseguro-gray: #e0e0e0;
-    --interseguro-white: #ffffff;
-    --border-radius: 8px;
-    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    /* Override Bootstrap primary and secondary colors with Interseguro brand colors */
+    --bs-primary: #0033A0; /* Interseguro Dark Blue */
+    --bs-secondary: #00AEEF; /* Interseguro Cyan */
+
+    /* Custom variables */
+    --bs-body-font-family: 'Montserrat', sans-serif;
+    --bs-body-bg: #f8f9fa;
 }
 
-/* General body and typography styles */
-body {
-    font-family: 'Montserrat', sans-serif;
-    margin: 0;
-    background-color: var(--interseguro-background);
-    color: var(--interseguro-text);
-    line-height: 1.6;
+/* Custom styles for components */
+
+/* Navbar logo styling */
+.navbar-brand .logo {
+    height: 30px; /* Adjust logo height for the navbar */
+    margin-right: 10px;
 }
 
-/* Header styles */
-header {
-    background-color: var(--interseguro-dark-blue);
-    padding: 1rem 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: var(--box-shadow);
+.navbar-brand {
+    font-weight: 500;
 }
 
-.logo {
-    height: 40px;
+/* Ensure the output textarea fills its container */
+.card-body textarea#output {
+    resize: none; /* Disable manual resizing */
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
 }
 
-header h1 {
-    color: var(--interseguro-white);
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin: 0;
-}
-
-/* Main container layout */
-#app {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2rem;
-    padding: 2rem;
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-/* Card/module styles */
-.module {
-    background: var(--interseguro-white);
-    border-radius: var(--border-radius);
-    padding: 2rem;
-    box-shadow: var(--box-shadow);
-}
-
-h2 {
-    color: var(--interseguro-dark-blue);
-    border-bottom: 2px solid var(--interseguro-cyan);
-    padding-bottom: 0.5rem;
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    font-size: 1.25rem;
+/* Make card headers slightly bolder */
+.card-header h5 {
     font-weight: 700;
 }
 
-/* Form styles */
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
-}
-
-.form-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-label {
-    font-weight: 600;
-    color: var(--interseguro-text);
-}
-
-input[type="text"] {
-    padding: 0.75rem;
-    border: 1px solid var(--interseguro-gray);
-    border-radius: var(--border-radius);
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    width: 100%;
-    box-sizing: border-box;
-    font-family: 'Montserrat', sans-serif;
-}
-
-input[type="text"]:focus {
-    outline: none;
-    border-color: var(--interseguro-cyan);
-    box-shadow: 0 0 0 3px rgba(0, 174, 239, 0.2);
-}
-
-/* Button styles */
-button {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    align-self: flex-start;
-}
-
-button[type="submit"] {
-    background-color: var(--interseguro-dark-blue);
-    color: var(--interseguro-white);
-}
-
-button[type="submit"]:hover {
-    background-color: #002266; /* Darker blue on hover */
-    transform: translateY(-2px);
-}
-
-#copy-all {
-    background-color: var(--interseguro-cyan);
-    color: var(--interseguro-white);
-    margin-top: 1rem;
-}
-
-#copy-all:hover {
-    background-color: #0095c7; /* Darker cyan on hover */
-    transform: translateY(-2px);
-}
-
-/* Textarea styles */
-textarea {
-    width: 100%;
-    height: 400px;
-    padding: 1rem;
-    border: 1px solid var(--interseguro-gray);
-    border-radius: var(--border-radius);
-    resize: vertical;
-    font-family: 'Courier New', Courier, monospace;
-    box-sizing: border-box;
-    background-color: #fdfdfd;
-}
-
-hr {
-    border: none;
-    border-top: 1px solid var(--interseguro-gray);
-    margin: 1rem 0;
-}
-
-/* Responsive design for smaller screens */
-@media (max-width: 768px) {
-    body {
-        padding: 1rem;
-    }
-
-    header {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 1rem;
-    }
-
-    header h1 {
-        margin-top: 1rem;
-        font-size: 1.2rem;
-    }
-
-    #app {
-        padding: 1rem;
-    }
-
-    .module {
-        padding: 1.5rem;
-    }
+/* Custom styling for the generate button to make it stand out */
+.btn-lg {
+    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 500;
 }
