@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const ctes = [];
         const finalUnionClauses = [];
 
-        // CTE 1: Row Count Validation
+        // CTE 1: Row Count Validation with Difference Calculation
         ctes.push(`
 count_t1 AS (
   SELECT COUNT(*) as count FROM ${dataTable1Path} ${whereClause}
@@ -52,7 +52,10 @@ validation_row_count AS (
     '1. Cantidad de Registros' AS tipo_de_validacion,
     CAST((SELECT count FROM count_t1) AS STRING) AS valor_tabla_1,
     CAST((SELECT count FROM count_t2) AS STRING) AS valor_tabla_2,
-    IF((SELECT count FROM count_t1) = (SELECT count FROM count_t2), 'OK', 'Diferencia') AS resultado
+    CASE
+      WHEN (SELECT count FROM count_t1) = (SELECT count FROM count_t2) THEN 'OK'
+      ELSE CONCAT('Diferencia: ', CAST(ABS((SELECT count FROM count_t1) - (SELECT count FROM count_t2)) AS STRING))
+    END AS resultado
 )`);
         finalUnionClauses.push("SELECT * FROM validation_row_count");
 
