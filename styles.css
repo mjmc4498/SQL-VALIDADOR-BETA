@@ -28,12 +28,12 @@ header {
     padding: 1rem 2rem;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     box-shadow: var(--box-shadow);
 }
 
 .logo {
     height: 40px;
-    margin-right: 1.5rem;
 }
 
 header h1 {
